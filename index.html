@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>DPDP + GDPR Compliance Checker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0a0e27;
+      --bg-soft: #0f1535;
+      --card: #1a1f3a;
+      --accent-blue: #3b82f6;
+      --accent-purple: #a855f7;
+      --accent-pink: #ec4899;
+      --accent-orange: #f97316;
+      --accent-green: #10b981;
+      --accent-yellow: #fbbf24;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --danger: #ef4444;
+      --border: #1e293b;
+      --good: #22c55e;
+      --medium: #facc15;
+      --low: #f97316;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(59,130,246,0.15) 0%, transparent 40%),
+        radial-gradient(circle at 80% 30%, rgba(168,85,247,0.12) 0%, transparent 40%),
+        radial-gradient(circle at 40% 80%, rgba(236,72,153,0.1) 0%, transparent 40%),
+        linear-gradient(135deg, #0a0e27 0%, #050816 100%);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 16px 50px 16px;
+    }
+    .app {
+      width: 100%;
+      max-width: 1200px;
+      background:
+        radial-gradient(circle at top left, rgba(59,130,246,0.08), transparent 50%),
+        radial-gradient(circle at bottom right, rgba(168,85,247,0.08), transparent 50%),
+        rgba(26,31,58,0.6);
+      border-radius: 32px;
+      border: 2px solid rgba(148,163,184,0.2);
+      box-shadow:
+        0 30px 90px rgba(0,0,0,0.7),
+        0 0 0 1px rgba(59,130,246,0.1),
+        inset 0 1px 0 rgba(255,255,255,0.05);
+      padding: 32px;
+      backdrop-filter: blur(20px);
+    }
+    @media (min-width: 768px) { .app { padding: 40px; } }
+
+    /* HEADER */
+    .app-header {
+      text-align: center;
+      margin-bottom: 28px;
+      padding-bottom: 24px;
+      border-bottom: 2px solid rgba(59,130,246,0.2);
+    }
+    .title-block h1 {
+      margin: 0 0 8px 0;
+      font-size: 2rem;
+      letter-spacing: 0.02em;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
+    }
+    .chip-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .chip {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(59,130,246,0.12);
+      border-radius: 999px;
+      padding: 5px 11px;
+      border: 1px solid rgba(59,130,246,0.4);
+      color: #bfdbfe;
+    }
+    .chip.gdpr {
+      background: rgba(168,85,247,0.12);
+      border-color: rgba(168,85,247,0.4);
+      color: #e9d5ff;
+    }
+    .subtitle {
+      margin: 12px auto 0 auto;
+      font-size: 0.95rem;
+      color: var(--muted);
+      max-width: 700px;
+      line-height: 1.5;
+    }
+
+    /* LAWYER INFO */
+    .lawyer-info {
+      margin: 16px auto 0 auto;
+      max-width: 650px;
+      padding: 14px 18px;
+      background: linear-gradient(135deg, rgba(236,72,153,0.08), rgba(249,115,22,0.08));
+      border-radius: 16px;
+      border: 1px solid rgba(236,72,153,0.25);
+      font-size: 0.8rem;
+      line-height: 1.6;
+    }
+    .lawyer-name {
+      font-weight: 700;
+      color: #fbbf24;
+      font-size: 0.9rem;
+    }
+    .lawyer-details {
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .disclaimer {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(148,163,184,0.15);
+      font-size: 0.72rem;
+      color: #cbd5e1;
+      font-style: italic;
+    }
+    .disclaimer strong {
+      color: #fbbf24;
+      font-style: normal;
+    }
+
+    /* LAYOUT */
+    .layout {
+      display: grid;
+      grid-template-columns: 1.7fr 1.3fr;
+      gap: 24px;
+      margin-top: 24px;
+    }
+    @media (max-width: 1000px) {
+      .layout {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+    }
+
+    /* CARD */
+    .card {
+      background:
+        radial-gradient(circle at top left, rgba(59,130,246,0.06), transparent 60%),
+        rgba(26,31,58,0.7);
+      border-radius: 24px;
+      border: 1px solid rgba(71,85,105,0.4);
+      padding: 20px;
+      box-shadow:
+        inset 0 1px 0 rgba(148,163,184,0.08),
+        0 10px 40px rgba(0,0,0,0.3);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(71,85,105,0.3);
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .card-note {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    /* FIELDS */
+    .field-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .field-row label {
+      font-size: 0.82rem;
+      color: #cbd5e1;
+      font-weight: 500;
+    }
+    .field-row small {
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+    .field-row input[type="text"],
+    .field-row input[type="url"],
+    .field-row select,
+    .field-row textarea {
+      background: rgba(15,23,42,0.6);
+      border-radius: 12px;
+      border: 1px solid rgba(71,85,105,0.6);
+      padding: 9px 12px;
+      font-size: 0.85rem;
+      color: var(--text);
+      outline: none;
+      width: 100%;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field-row input:focus,
+    .field-row select:focus,
+    .field-row textarea:focus {
+      border-color: rgba(59,130,246,0.8);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+    textarea {
+      resize: vertical;
+      min-height: 70px;
+      max-height: 150px;
+    }
+
+    /* BADGES */
+    .badges-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .badge {
+      font-size: 0.7rem;
+      border-radius: 999px;
+      padding: 4px 10px;
+      border: 1px solid rgba(148,163,184,0.3);
+      background: rgba(15,23,42,0.8);
+      color: var(--muted);
+      cursor: default;
+    }
+
+    /* QUESTIONS */
+    .q-group-title {
+      margin: 16px 0 8px 0;
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #fbbf24;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .q-group-title::before {
+      content: '';
+      width: 4px;
+      height: 16px;
+      background: linear-gradient(180deg, #fbbf24, #f97316);
+      border-radius: 2px;
+    }
+
+    .question {
+      border-radius: 14px;
+      border: 1px solid rgba(71,85,105,0.5);
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      background:
+        radial-gradient(circle at top left, rgba(59,130,246,0.08), transparent 70%),
+        rgba(15,23,42,0.5);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .question:hover {
+      border-color: rgba(59,130,246,0.6);
+      box-shadow: 0 4px 20px rgba(59,130,246,0.1);
+    }
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .question-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+    .question-meta {
+      font-size: 0.7rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .question-desc {
+      margin-top: 4px;
+      font-size: 0.76rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 8px;
+    }
+    .pill {
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 0.75rem;
+      border: 1px solid rgba(100,116,139,0.6);
+      background: rgba(15,23,42,0.7);
+      cursor: pointer;
+      color: #e2e8f0;
+      transition: all 0.2s;
+    }
+    .pill:hover {
+      border-color: rgba(59,130,246,0.8);
+      background: rgba(59,130,246,0.15);
+    }
+    .pill[data-selected="true"] {
+      background: linear-gradient(135deg, #3b82f6, #10b981);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 0 0 2px rgba(59,130,246,0.3);
+      font-weight: 600;
+    }
+
+    /* BUTTONS */
+    .buttons-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .btn-primary {
+      border-radius: 999px;
+      border: none;
+      padding: 10px 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #fff;
+      background: linear-gradient(135deg, #3b82f6, #10b981);
+      box-shadow: 0 10px 30px rgba(16,185,129,0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 40px rgba(16,185,129,0.4);
+    }
+    .btn-secondary {
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.4);
+      background: rgba(15,23,42,0.8);
+      color: var(--muted);
+      padding: 9px 16px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-secondary:hover {
+      border-color: rgba(168,85,247,0.6);
+      color: #e9d5ff;
+    }
+
+    /* SCORE RING */
+    .score-display {
+      display: flex;
+      flex-direction: row;
+      gap: 18px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .score-ring {
+      width: 100px;
+      height: 100px;
+      border-radius: 999px;
+      border: 4px solid rgba(15,23,42,0.9);
+      background:
+        radial-gradient(circle, #0a0e27 0, #0a0e27 50%, transparent 55%),
+        conic-gradient(var(--accent-blue), var(--accent-green));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 30px rgba(59,130,246,0.4);
+    }
+    .score-ring-inner {
+      width: 70px;
+      height: 70px;
+      border-radius: 999px;
+      background: #0a0e27;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 0 0 2px rgba(59,130,246,0.5);
+    }
+    .score-ring-inner span {
+      font-size: 1.3rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #60a5fa, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .level-pill {
+      font-size: 0.75rem;
+      padding: 5px 12px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .level-high {
+      background: rgba(34,197,94,0.2);
+      border: 1px solid rgba(34,197,94,0.6);
+      color: #bbf7d0;
+    }
+    .level-medium {
+      background: rgba(251,191,36,0.15);
+      border: 1px solid rgba(251,191,36,0.6);
+      color: #fef3c7;
+    }
+    .level-low {
+      background: rgba(249,115,22,0.15);
+      border: 1px solid rgba(249,115,22,0.7);
+      color: #fed7aa;
+    }
+    .summary-text {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* SECTION SCORES */
+    .section-score-row {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 0.78rem;
+    }
+    .section-score {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(15,23,42,0.7);
+      border: 1px solid rgba(71,85,105,0.5);
+      transition: border-color 0.2s;
+    }
+    .section-score:hover {
+      border-color: rgba(59,130,246,0.6);
+    }
+    .section-score span.label {
+      color: #e2e8f0;
+      font-weight: 500;
+    }
+    .section-score span.value {
+      font-weight: 600;
+    }
+
+    .section-score[data-level="high"] span.value { color: var(--good); }
+    .section-score[data-level="medium"] span.value { color: var(--medium); }
+    .section-score[data-level="low"] span.value { color: var(--low); }
+
+    /* RECOMMENDATIONS */
+    .recommendations {
+      margin-top: 14px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+    .recommendations::-webkit-scrollbar {
+      width: 6px;
+    }
+    .recommendations::-webkit-scrollbar-track {
+      background: rgba(15,23,42,0.5);
+      border-radius: 10px;
+    }
+    .recommendations::-webkit-scrollbar-thumb {
+      background: rgba(59,130,246,0.5);
+      border-radius: 10px;
+    }
+    .rec-group {
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background:
+        radial-gradient(circle at top left, rgba(168,85,247,0.08), transparent 60%),
+        rgba(15,23,42,0.7);
+      border: 1px solid rgba(71,85,105,0.5);
+    }
+    .rec-title {
+      font-size: 0.82rem;
+      color: #fbbf24;
+      margin-bottom: 6px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .rec-title::before {
+      content: '⚡';
+      font-size: 1rem;
+    }
+    .rec-list {
+      padding-left: 18px;
+      margin: 0;
+      line-height: 1.6;
+    }
+    .rec-list li {
+      margin-bottom: 4px;
+      color: #cbd5e1;
+    }
+
+    .tagline {
+      margin-top: 14px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .tagline strong { color: #fbbf24; }
+
+    /* TABS for DPDP vs GDPR */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      border-bottom: 2px solid rgba(71,85,105,0.3);
+      padding-bottom: 8px;
+    }
+    .tab {
+      padding: 6px 14px;
+      border-radius: 8px 8px 0 0;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: rgba(15,23,42,0.5);
+      border: 1px solid rgba(71,85,105,0.4);
+      border-bottom: none;
+      color: var(--muted);
+      transition: all 0.2s;
+    }
+    .tab:hover {
+      background: rgba(59,130,246,0.1);
+      color: #bfdbfe;
+    }
+    .tab.active {
+      background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(168,85,247,0.2));
+      color: #e0e7ff;
+      border-color: rgba(59,130,246,0.6);
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="title-block">
+        <h1>DPDP + GDPR Compliance Checker</h1>
+        <div class="chip-row">
+          <span class="chip">DPDP Act 2023 · India</span>
+          <span class="chip gdpr">GDPR · EU Regulation 2016/679</span>
+          <span class="chip">2025 Rules</span>
+        </div>
+        <p class="subtitle">
+          Comprehensive self‑assessment tool for websites and online programmes targeting Indian and European residents.
+          Evaluate compliance with India's Digital Personal Data Protection Act, 2023 (DPDP) and the EU General Data Protection Regulation (GDPR).
+        </p>
+      </div>
+
+      <div class="lawyer-info">
+        <div class="lawyer-name">Advocate Udit MALIK</div>
+        <div class="lawyer-details">
+          Enrollment No: D/6743/2021 · Bar Council of India<br>
+          Legal Counsel · Data Protection & Privacy Law
+        </div>
+        <div class="disclaimer">
+          <strong>Legal Disclaimer:</strong> This tool is provided for informational and educational purposes only and does not constitute legal advice.
+          The assessment and recommendations are based on simplified heuristics and publicly available legal texts.
+          For specific legal guidance, consult qualified legal counsel.<br><br>
+          <strong>Copyright Notice:</strong> © 2025 Advocate Udit Malik. All rights reserved.
+          No part of this tool may be reproduced, distributed, or transmitted in any form or by any means without the prior written consent of Advocate Udit Malik.
+        </div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <!-- LEFT: INPUTS -->
+      <section class="card">
+        <div class="card-header">
+          <div class="card-title">1 · Website & Context</div>
+          <div class="card-note">Describe what you're assessing</div>
+        </div>
+        <div class="field-row">
+          <label for="siteUrl">Primary page / flow URL</label>
+          <input id="siteUrl" type="url" placeholder="e.g. https://www.inde.campusfrance.org/classes-internationales" />
+        </div>
+        <div class="field-row">
+          <label for="orgType">Organisation type</label>
+          <select id="orgType">
+            <option value="education">Education / University / Gov. Programme</option>
+            <option value="saas">SaaS / Tech / Platform</option>
+            <option value="ecommerce">E‑commerce / Retail</option>
+            <option value="finance">Financial / Fintech</option>
+            <option value="health">Health / Hospital / Insurer</option>
+            <option value="other">Other / Mixed</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <label for="notes">Scope notes (optional)</label>
+          <textarea id="notes" placeholder="Example: Only assessing the public information page and visible notices; not logged‑in flows or backend systems."></textarea>
+        </div>
+
+        <div class="badges-row">
+          <span class="badge">Step 2 · Answer questions below</span>
+          <span class="badge">Step 3 · Click "Calculate Compliance"</span>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs">
+          <div class="tab active" data-tab="dpdp">DPDP (India)</div>
+          <div class="tab" data-tab="gdpr">GDPR (EU)</div>
+        </div>
+
+        <!-- DPDP TAB -->
+        <div class="tab-content active" data-tab-content="dpdp">
+          <h3 class="q-group-title">A. Notice & Consent (DPDP Act ss.6–7, Rule 3)</h3>
+
+          <div class="question" data-key="dpdp_noticeVisible">
+            <div class="question-header">
+              <div class="question-title">Is a clear DPDP privacy notice linked on the page?</div>
+              <div class="question-meta">Rule&nbsp;3</div>
+            </div>
+            <div class="question-desc">
+              Look for a prominent "Privacy" / "Data Protection" link explaining personal data, purposes, rights &amp; Board complaint option.
+            </div>
+            <div class="options">
+              <button class="pill" data-value="yes">Yes, DPDP‑style &amp; clear</button>
+              <button class="pill" data-value="partial">Yes, but generic / non‑DPDP</button>
+              <button class="pill" data-value="no">No visible notice</button>
+            </div>
+          </div>
+
+          <div class="question" data-key="dpdp_consentMechanism">
+            <div class="question-header">
+              <div class="question-title">Is consent obtained specifically &amp; clearly?</div>
+              <div class="question-meta">Act s.6</div>
+            </div>
+            <div class="question-desc">
+              For forms / sign‑up, is there clear wording &amp; an explicit checkbox / affirmative action, with a way to withdraw consent later?
+            </div>
+            <div class="options">
+              <button class="pill" data-value="yes">Yes, explicit + withdrawal</button>
+              <button class="pill" data-value="partial">Partly (tacit / bundled)</button>
+              <button class="pill" data-value="no">No explicit consent</button>
+            </div>
+          </div>
+
+          <div class="question" data-key="dpdp_cookiesTracking">
+            <div class="question-header">
+              <div class="question-title">Are cookies / trackers explained with control?</div>
+              <div class="question-meta">Notice</div>
+            </div>
+            <div class="question-desc">
+              Check for cookie banners / settings and whether tracking is explained for Indian users.
+            </div>
+            <div class="options">
+              <button class="pill" data-value="yes">Yes, with controls</button>
+              <button class="pill" data-value="partial">Only banner / vague</button>
+              <button class="pill" data-value="no">No explanation</button>
+            </div>
+          </div>
+
+          <h3 class="q-group-title">B. Rights, DPO, Grievances (Rules 9 &amp; 14)</h3>
+
+          <div class="question" data-key="dpdp_dpoVisible">
+            <div class="question-header">
+              <div class="question-title">Is a DPO / data protection contact published?</div>
+              <div class="question-meta">Rule&nbsp;9</div>
+            </div>
+            <div class="question-desc">
+              Look for a specific contact (email / form) for data protection queries.
+            </div>
+            <div class="options">
+              <button class="pill" data-value="yes">Yes, clearly</button>
+              <button class="pill" data-value="partial">Some contact, unclear</button>
+              <button class="pill" data-value="no">No dedicated contact</button>
+            </div>
+          </div>
+
+          <div class="question" data-key="dpdp_rightsProcess">
+            <div class="question-header">
+              <div class="question-title">Is there a clear process to exercise DPDP rights?</div>
+              <div class="question-meta">Rule&nbsp;14</div>
+            </div>
+            <div class="question-desc">
+              Check if users see how to request access, correction, erasure, and if timelines (≤90 days) are stated.
+            </div>
+            <div class="options">
+              <button class="pill" data-value="yes">Yes, detailed</button>
+              <button class="pill" data-value="partial">Mentioned, vague</button>
+              <button class="pill" data-value="no">No clear path</button>
+            </div>
+          </div>
+
+          <h3 class="q-group-title">C. Security &amp; Breach (Rules 6 &amp; 7)</h3>
+
+          <div class="question" data-key="dpdp_securityStatement">
+            <div class="question-header">
+              <div class="question-title">Is there description of security practices?</div>
+              <div class="question-meta">Rule&nbsp;6</div>
+            </div>
+            <div class="question-desc">
+              Look for mention of encryption, access controls, or "reasonable security practices".
+            </div>
+            <div class="options">
+              <button class="pill" data-value="yes">Yes, specific safeguards</button>
+              <button class="pill" data-value="partial">Generic "we secure"</button>
+              <button class="pill" data-value="no">No mention</button>
+            </div>
+          </div>
+
+          <div class="question" data-key="dpdp_breachProcess">
+            <div class="question-header">
+              <div class="question-title">Is there a breach notification commitment?</div>
+              <div class="question-meta">Rule&nbsp;7</div>
+            </div>
+            <div class="question-desc">
+              Any reference to how users will be informed of breaches?
+            </div>
+            <div class="options">
+              <button class="pill" data-value="yes">Yes, described</button>
+              <button class="pill" data-value="partial">Some mention, vague</button>
+              <button class="pill" data-value="no">No mention</button>
+            </div>
+          </div>
+
+          <h3 class="q-group-title">D. Cross‑Border &amp; Minors (Rules 10, 15)</h3>
+
+          <div class="question" data-key="dpdp_crossBorder">
+            <div class="question-header">
+              <div class="question-title">Does notice explain data leaving India?</div>
+              <div class="question-meta">Rule&nbsp;15</div>
+            </div>
+            <div class="question-desc">
+              Indian data going to EU / US servers should be clearly mentioned.
+            </div>
+            <div class="options">
+              <button class="pill" data-value="yes">Yes, clearly</button>
+              <button class="pill" data-value="partial">Implied, not explicit</button>
+              <button class="pill" data-value="no">Not mentioned</button>
+            </div>
+          </div>
+
+          <div class="question" data-key="dpdp_minors">
+            <div class="question-header">
+              <div class="question-title">Does site handle minors with guardian consent?</div>
+              <div class="question-meta">Rule&nbsp;10</div>
+            </div>
+            <div class="question-desc">
+              If under‑18 applicants, check if parental consent is required.
+            </div>
+            <div class="options">
+              <button class="pill" data-value="na">Not applicable</button>
+              <button class="pill" data-value="yes">Yes, guardian consent</button>
+              <button class="pill" data-value="partial">Mentioned, unclear</button>
+              <button class="pill" data-value="no">Minors, no guardian flow</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- GDPR TAB -->
+        <div class="tab-content" data-tab-content="gdpr">
+          <h3 class="q-group-title">A. Lawful Basis & Transparency (GDPR Arts. 6, 13, 14)</h3>
+
+          <div class="question" data-key="gdpr_lawfulBasis">
+            <div class="question-header">
+              <div class="question-title">Is a lawful basis for processing clearly stated?</div>
+              <div class="question-meta">Art. 6</div>
+            </div>
+            <div class="question-desc">
+              Check if the privacy notice specifies consent, contract, legal obligation, legitimate interest, etc.
+            </div>
+            <div class="options">
+              <button class="pill" data-value="yes">Yes, clearly stated</button>
+              <button class="pill" data-value="partial">Implied, not explicit</button>
+              <button class="pill" data-value="no">Not mentioned</button>
+            </div>
+          </div>
+
+          <div class="question" data-key="gdpr_transparency">
+            <div class="question-header">
+              <div class="question-title">Does notice include all GDPR transparency requirements?</div>
+              <div class="question-meta">Arts. 13, 14</div>
+            </div>
+            <div class="question-desc">
+              Identity of controller, DPO contact, purposes, legal basis, recipients, retention, rights, right to lodge complaint with supervisory authority.
+            </div>
+            <div class="options">
+              <button class="pill" data-value="yes">Yes, comprehensive</button>
+              <button class="pill" data-value="partial">Partial information</button>
+              <button class="pill" data-value="no">Missing key elements</button>
+            </div>
+          </div>
+
+          <div class="question" data-key="gdpr_consent">
+            <div class="question-header">
+              <div class="question-title">Is consent GDPR-compliant (if used as basis)?</div>
+              <div class="question-meta">Art. 7</div>
+            </div>
+            <div class="question-desc">
+              Freely given, specific, informed, unambiguous, easy to withdraw, separate from other terms.
+            </div>
+            <div class="options">
+              <button class="pill" data-value="yes">Yes, fully compliant</button>
+              <button class="pill" data-value="partial">Partly compliant</button>
+              <button class="pill" data-value="no">Non-compliant / not used</button>
+            </div>
+          </div>
+
+          <h3 class="q-group-title">B. Data Subject Rights (GDPR Arts. 15–22)</h3>
+
+          <div class="question" data-key="gdpr_rightsInfo">
+            <div class="question-header">
+              <div class="question-title">Are all GDPR rights clearly explained?</div>
+              <div class="question-meta">Arts. 15–22</div>
+            </div>
+            <div class="question-desc">
+              Access, rectification, erasure, restriction, portability, objection, automated decision-making.
+            </div>
+            <div class="options">
+              <button class="pill" data-value="yes">Yes, all rights listed</button>
+              <button class="pill" data-value="partial">Some rights mentioned</button>
+              <button class="pill" data-value="no">Rights not explained</button>
+            </div>
+          </div>
+
+          <div class="question" data-key="gdpr_dpo">
+            <div class="question-header">
+              <div class="question-title">Is DPO contact published (if required)?</div>
+              <div class="question-meta">Art. 37–39</div>
+            </div>
+            <div class="question-desc">
+              Public authorities, large-scale monitoring, or special categories require DPO.
+            </div>
+            <div class="options">
+              <button class="pill" data-value="yes">Yes, published</button>
+              <button class="pill" data-value="partial">Contact exists, unclear if DPO</button>
+              <button class="pill" data-value="no">No DPO contact</button>
+              <button class="pill" data-value="na">Not required</button>
+            </div>
+          </div>
+
+          <h3 class="q-group-title">C. Security & Breach (GDPR Arts. 32–34)</h3>
+
+          <div class="question" data-key="gdpr_security">
+            <div class="question-header">
+              <div class="question-title">Are appropriate technical & organizational measures in place?</div>
+              <div class="question-meta">Art. 32</div>
+            </div>
+            <div class="question-desc">
+              Encryption, pseudonymization, confidentiality, integrity, availability, resilience.
+            </div>
+            <div class="options">
+              <button class="pill" data-value="yes">Yes, documented</button>
+              <button class="pill" data-value="partial">Basic measures</button>
+              <button class="pill" data-value="no">Not documented</button>
+            </div>
+          </div>
+
+          <div class="question" data-key="gdpr_breach">
+            <div class="question-header">
+              <div class="question-title">Is there a 72-hour breach notification process?</div>
+              <div class="question-meta">Arts. 33, 34</div>
+            </div>
+            <div class="question-desc">
+              Notify supervisory authority within 72 hours; notify data subjects if high risk.
+            </div>
+            <div class="options">
+              <button class="pill" data-value="yes">Yes, process documented</button>
+              <button class="pill" data-value="partial">Process exists, not GDPR-specific</button>
+              <button class="pill" data-value="no">No process</button>
+            </div>
+          </div>
+
+          <h3 class="q-group-title">D. International Transfers & Special Categories (Arts. 44–49, 9)</h3>
+
+          <div class="question" data-key="gdpr_transfers">
+            <div class="question-header">
+              <div class="question-title">Are international transfers compliant?</div>
+              <div class="question-meta">Arts. 44–49</div>
+            </div>
+            <div class="question-desc">
+              Adequacy decision, SCCs, BCRs, or derogations for transfers outside EEA.
+            </div>
+            <div class="options">
+              <button class="pill" data-value="yes">Yes, safeguards in place</button>
+              <button class="pill" data-value="partial">Transfers occur, unclear safeguards</button>
+              <button class="pill" data-value="no">No safeguards / not mentioned</button>
+              <button class="pill" data-value="na">No international transfers</button>
+            </div>
+          </div>
+
+          <div class="question" data-key="gdpr_specialCategories">
+            <div class="question-header">
+              <div class="question-title">Are special category data handled properly?</div>
+              <div class="question-meta">Art. 9</div>
+            </div>
+            <div class="question-desc">
+              Health, biometric, genetic, racial/ethnic origin, political opinions, religious beliefs, etc.
+            </div>
+            <div class="options">
+              <button class="pill" data-value="yes">Yes, with explicit consent / legal basis</button>
+              <button class="pill" data-value="partial">Processed, unclear basis</button>
+              <button class="pill" data-value="no">Processed without proper basis</button>
+              <button class="pill" data-value="na">Not processed</button>
+            </div>
+          </div>
+
+          <div class="question" data-key="gdpr_children">
+            <div class="question-header">
+              <div class="question-title">Is parental consent obtained for children under 16?</div>
+              <div class="question-meta">Art. 8</div>
+            </div>
+            <div class="question-desc">
+              For information society services, parental consent required for children (age may vary by member state).
+            </div>
+            <div class="options">
+              <button class="pill" data-value="yes">Yes, parental consent</button>
+              <button class="pill" data-value="partial">Mentioned, not verified</button>
+              <button class="pill" data-value="no">Children processed, no consent</button>
+              <button class="pill" data-value="na">Not applicable</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="buttons-row">
+          <button id="calculateBtn" class="btn-primary">
+            ⚡ Calculate Compliance
+          </button>
+          <button id="resetBtn" class="btn-secondary">
+            🔄 Reset answers
+          </button>
+        </div>
+      </section>
+
+      <!-- RIGHT: OUTPUT -->
+      <aside class="card">
+        <div class="card-header">
+          <div class="card-title">2 · Results &amp; Recommendations</div>
+          <div class="card-note">Based on your answers</div>
+        </div>
+
+        <div class="score-display">
+          <div class="score-ring" id="scoreRing">
+            <div class="score-ring-inner">
+              <span id="scoreNumber">–</span>
+            </div>
+          </div>
+          <div>
+            <div id="levelPill" class="level-pill level-medium" style="display:none;"></div>
+            <p id="summaryText" class="summary-text">
+              Fill in the answers on the left and click <strong>Calculate Compliance</strong> to see scores and tailored guidance for both DPDP and GDPR.
+            </p>
+          </div>
+        </div>
+
+        <div class="section-score-row" id="sectionScores" style="display:none;">
+          <!-- DPDP Sections -->
+          <div class="section-score" data-level="medium" data-section="dpdp_notice">
+            <span class="label">🇮🇳 DPDP: Notice & Consent</span>
+            <span class="value" id="sectionDpdpNoticeValue">–</span>
+          </div>
+          <div class="section-score" data-level="medium" data-section="dpdp_rights">
+            <span class="label">🇮🇳 DPDP: Rights & DPO</span>
+            <span class="value" id="sectionDpdpRightsValue">–</span>
+          </div>
+          <div class="section-score" data-level="medium" data-section="dpdp_security">
+            <span class="label">🇮🇳 DPDP: Security & Breach</span>
+            <span class="value" id="sectionDpdpSecurityValue">–</span>
+          </div>
+          <div class="section-score" data-level="medium" data-section="dpdp_xborder">
+            <span class="label">🇮🇳 DPDP: Cross‑Border & Minors</span>
+            <span class="value" id="sectionDpdpXBorderValue">–</span>
+          </div>
+
+          <!-- GDPR Sections -->
+          <div class="section-score" data-level="medium" data-section="gdpr_lawful">
+            <span class="label">🇪🇺 GDPR: Lawful Basis & Transparency</span>
+            <span class="value" id="sectionGdprLawfulValue">–</span>
+          </div>
+          <div class="section-score" data-level="medium" data-section="gdpr_rights">
+            <span class="label">🇪🇺 GDPR: Data Subject Rights</span>
+            <span class="value" id="sectionGdprRightsValue">–</span>
+          </div>
+          <div class="section-score" data-level="medium" data-section="gdpr_security">
+            <span class="label">🇪🇺 GDPR: Security & Breach</span>
+            <span class="value" id="sectionGdprSecurityValue">–</span>
+          </div>
+          <div class="section-score" data-level="medium" data-section="gdpr_transfers">
+            <span class="label">🇪🇺 GDPR: Transfers & Special Data</span>
+            <span class="value" id="sectionGdprTransfersValue">–</span>
+          </div>
+        </div>
+
+        <div class="recommendations" id="recsContainer" style="display:none;"></div>
+
+        <p class="tagline">
+          <strong>Note:</strong> This tool uses simplified heuristics for DPDP Act, 2023, DPDP Rules 2025, and GDPR (EU 2016/679).
+          Always have final assessments vetted by qualified legal counsel. For detailed legal advice, contact Advocate Udit Malik.
+        </p>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    const dpdpWeights = {
+      dpdp_noticeVisible: 2,
+      dpdp_consentMechanism: 2,
+      dpdp_cookiesTracking: 1,
+      dpdp_dpoVisible: 2,
+      dpdp_rightsProcess: 2,
+      dpdp_securityStatement: 1,
+      dpdp_breachProcess: 2,
+      dpdp_crossBorder: 2,
+      dpdp_minors: 1
+    };
+
+    const gdprWeights = {
+      gdpr_lawfulBasis: 2,
+      gdpr_transparency: 2,
+      gdpr_consent: 2,
+      gdpr_rightsInfo: 2,
+      gdpr_dpo: 1,
+      gdpr_security: 2,
+      gdpr_breach: 2,
+      gdpr_transfers: 2,
+      gdpr_specialCategories: 1,
+      gdpr_children: 1
+    };
+
+    function valueToScore(val) {
+      if (val === "yes") return 2;
+      if (val === "partial") return 1;
+      if (val === "no") return 0;
+      if (val === "na") return null;
+      return null;
+    }
+
+    function computeScores(answers) {
+      // DPDP
+      let dpdpScore = 0, dpdpPossible = 0;
+      const dpdpSections = {
+        notice: ["dpdp_noticeVisible", "dpdp_consentMechanism", "dpdp_cookiesTracking"],
+        rights: ["dpdp_dpoVisible", "dpdp_rightsProcess"],
+        security: ["dpdp_securityStatement", "dpdp_breachProcess"],
+        xborder: ["dpdp_crossBorder", "dpdp_minors"]
+      };
+      const dpdpSectionResults = {
+        notice: { score: 0, possible: 0 },
+        rights: { score: 0, possible: 0 },
+        security: { score: 0, possible: 0 },
+        xborder: { score: 0, possible: 0 }
+      };
+
+      for (const key in dpdpWeights) {
+        const val = answers[key];
+        const score = valueToScore(val);
+        if (score === null) continue;
+        const weight = dpdpWeights[key];
+        dpdpScore += score * weight;
+        dpdpPossible += 2 * weight;
+        for (const sec in dpdpSections) {
+          if (dpdpSections[sec].includes(key)) {
+            dpdpSectionResults[sec].score += score * weight;
+            dpdpSectionResults[sec].possible += 2 * weight;
+          }
+        }
+      }
+
+      // GDPR
+      let gdprScore = 0, gdprPossible = 0;
+      const gdprSections = {
+        lawful: ["gdpr_lawfulBasis", "gdpr_transparency", "gdpr_consent"],
+        rights: ["gdpr_rightsInfo", "gdpr_dpo"],
+        security: ["gdpr_security", "gdpr_breach"],
+        transfers: ["gdpr_transfers", "gdpr_specialCategories", "gdpr_children"]
+      };
+      const gdprSectionResults = {
+        lawful: { score: 0, possible: 0 },
+        rights: { score: 0, possible: 0 },
+        security: { score: 0, possible: 0 },
+        transfers: { score: 0, possible: 0 }
+      };
+
+      for (const key in gdprWeights) {
+        const val = answers[key];
+        const score = valueToScore(val);
+        if (score === null) continue;
+        const weight = gdprWeights[key];
+        gdprScore += score * weight;
+        gdprPossible += 2 * weight;
+        for (const sec in gdprSections) {
+          if (gdprSections[sec].includes(key)) {
+            gdprSectionResults[sec].score += score * weight;
+            gdprSectionResults[sec].possible += 2 * weight;
+          }
+        }
+      }
+
+      const dpdpPct = dpdpPossible > 0 ? Math.round((dpdpScore / dpdpPossible) * 100) : 0;
+      const gdprPct = gdprPossible > 0 ? Math.round((gdprScore / gdprPossible) * 100) : 0;
+      const overallPct = Math.round((dpdpPct + gdprPct) / 2);
+
+      function sectionPct(results, sec) {
+        const s = results[sec];
+        return s.possible > 0 ? Math.round((s.score / s.possible) * 100) : 0;
+      }
+
+      return {
+        overallPct,
+        dpdpPct,
+        gdprPct,
+        dpdpSectionPct: {
+          notice: sectionPct(dpdpSectionResults, "notice"),
+          rights: sectionPct(dpdpSectionResults, "rights"),
+          security: sectionPct(dpdpSectionResults, "security"),
+          xborder: sectionPct(dpdpSectionResults, "xborder")
+        },
+        gdprSectionPct: {
+          lawful: sectionPct(gdprSectionResults, "lawful"),
+          rights: sectionPct(gdprSectionResults, "rights"),
+          security: sectionPct(gdprSectionResults, "security"),
+          transfers: sectionPct(gdprSectionResults, "transfers")
+        }
+      };
+    }
+
+    function levelFromPct(pct) {
+      if (pct >= 80) return "high";
+      if (pct >= 50) return "medium";
+      return "low";
+    }
+
+    function levelLabel(level) {
+      if (level === "high") return "✅ High Compliance";
+      if (level === "medium") return "⚠️ Moderate Compliance";
+      return "❌ Low Compliance";
+    }
+
+    function levelSummary(level, dpdpPct, gdprPct, url) {
+      const target = url || "this website";
+      return `${target} scored ${dpdpPct}% on DPDP and ${gdprPct}% on GDPR (overall: ${Math.round(
+        (dpdpPct + gdprPct) / 2
+      )}%). ${
+        level === "high"
+          ? "Strong foundation with minor improvements needed."
+          : level === "medium"
+          ? "Moderate alignment; key gaps require attention."
+          : "Significant remediation needed across multiple areas."
+      }`;
+    }
+
+    function levelClass(level) {
+      if (level === "high") return "level-pill level-high";
+      if (level === "medium") return "level-pill level-medium";
+      return "level-pill level-low";
+    }
+
+    function sectionLabel(level) {
+      if (level === "high") return "Good";
+      if (level === "medium") return "Needs improvement";
+      return "High risk";
+    }
+
+    function generateRecommendations(answers, scores) {
+      const recs = [];
+
+      // DPDP RECOMMENDATIONS
+      const dpdpNoticeIssues = [];
+      if (["no", "partial", undefined].includes(answers.dpdp_noticeVisible)) {
+        dpdpNoticeIssues.push(
+          "Implement a dedicated DPDP-compliant privacy notice prominently linked on all Indian-facing pages. Include: itemized data categories, specific purposes, retention periods, cross-border recipients, and the right to complain to the Data Protection Board of India (Rule 3)."
+        );
+      }
+      if (["no", "partial", undefined].includes(answers.dpdp_consentMechanism)) {
+        dpdpNoticeIssues.push(
+          "Introduce explicit consent mechanisms with clear, affirmative action (e.g., un-ticked checkboxes). Ensure consent withdrawal is as easy as giving consent (Act s.6, Rule 3)."
+        );
+      }
+      if (["no", "partial", undefined].includes(answers.dpdp_cookiesTracking)) {
+        dpdpNoticeIssues.push(
+          "Document all cookies and tracking technologies. Provide Indian users with clear explanations and choice mechanisms (cookie banner with granular controls)."
+        );
+      }
+      if (dpdpNoticeIssues.length) {
+        recs.push({
+          title: "🇮🇳 DPDP: Notice & Consent (Act ss.6–7, Rule 3)",
+          items: dpdpNoticeIssues
+        });
+      }
+
+      const dpdpRightsIssues = [];
+      if (["no", "partial", undefined].includes(answers.dpdp_dpoVisible)) {
+        dpdpRightsIssues.push(
+          "Publish the name and contact details of the Data Protection Officer or responsible person on the website and in all privacy notices (Rule 9). Include email, phone, and postal address."
+        );
+      }
+      if (["no", "partial", undefined].includes(answers.dpdp_rightsProcess)) {
+        dpdpRightsIssues.push(
+          "Create a clear, accessible process for Indian Data Principals to exercise their rights (access, correction, erasure, data portability). Document the process, required identifiers, and commit to maximum 90-day grievance resolution (Rule 14)."
+        );
+      }
+      if (dpdpRightsIssues.length) {
+        recs.push({
+          title: "🇮🇳 DPDP: Rights, DPO & Grievance Handling (Rules 9 & 14)",
+          items: dpdpRightsIssues
+        });
+      }
+
+      const dpdpSecIssues = [];
+      if (["no", "partial", undefined].includes(answers.dpdp_securityStatement)) {
+        dpdpSecIssues.push(
+          "Update privacy/security documentation to describe specific technical and organizational measures: encryption (at rest and in transit), access controls, logging and monitoring, regular backups, and business continuity plans (Rule 6)."
+        );
+      }
+      if (["no", "partial", undefined].includes(answers.dpdp_breachProcess)) {
+        dpdpSecIssues.push(
+          "Establish a DPDP-specific data breach response procedure: (1) Notify affected Data Principals without delay with full details (nature, extent, consequences, mitigation, contact person); (2) Notify the Data Protection Board immediately (basic info) and within 72 hours (detailed report including causes, measures, and remediation) (Rule 7)."
+        );
+      }
+      if (dpdpSecIssues.length) {
+        recs.push({
+          title: "🇮🇳 DPDP: Security Safeguards & Breach Notification (Rules 6 & 7)",
+          items: dpdpSecIssues
+        });
+      }
+
+      const dpdpXbIssues = [];
+      if (["no", "partial", undefined].includes(answers.dpdp_crossBorder)) {
+        dpdpXbIssues.push(
+          "Explicitly state in the privacy notice when and where Indian personal data is transferred outside India (e.g., EU, US, other countries). Specify purposes, recipients, and safeguards. Monitor and comply with any Government notifications under Act s.16 and Rule 15."
+        );
+      }
+      if (answers.dpdp_minors && answers.dpdp_minors !== "na" && answers.dpdp_minors !== "yes") {
+        dpdpXbIssues.push(
+          "If processing data of minors (under 18), implement verifiable guardian consent mechanisms. Update privacy notice to explain how guardian consent is obtained and verified (Rule 10, Fourth Schedule)."
+        );
+      }
+      if (dpdpXbIssues.length) {
+        recs.push({
+          title: "🇮🇳 DPDP: Cross-Border Transfers & Minors (Rules 10 & 15)",
+          items: dpdpXbIssues
+        });
+      }
+
+      // GDPR RECOMMENDATIONS
+      const gdprLawfulIssues = [];
+      if (["no", "partial", undefined].includes(answers.gdpr_lawfulBasis)) {
+        gdprLawfulIssues.push(
+          "Clearly identify and document the lawful basis for each processing activity under GDPR Art. 6: consent, contract, legal obligation, vital interests, public task, or legitimate interests. State this explicitly in the privacy notice."
+        );
+      }
+      if (["no", "partial", undefined].includes(answers.gdpr_transparency)) {
+        gdprLawfulIssues.push(
+          "Ensure the privacy notice includes all GDPR transparency requirements (Arts. 13, 14): controller identity and contact, DPO contact (if applicable), purposes and legal basis, recipients, retention periods, data subject rights, right to lodge complaint with supervisory authority, source of data (if not collected directly), existence of automated decision-making."
+        );
+      }
+      if (["no", "partial", undefined].includes(answers.gdpr_consent)) {
+        gdprLawfulIssues.push(
+          "If using consent as lawful basis, ensure it meets GDPR standards (Art. 7): freely given, specific, informed, unambiguous indication of wishes, separate from other terms, easy to withdraw. Use clear affirmative action (e.g., opt-in checkbox, not pre-ticked)."
+        );
+      }
+      if (gdprLawfulIssues.length) {
+        recs.push({
+          title: "🇪🇺 GDPR: Lawful Basis & Transparency (Arts. 6, 13, 14)",
+          items: gdprLawfulIssues
+        });
+      }
+
+      const gdprRightsIssues = [];
+      if (["no", "partial", undefined].includes(answers.gdpr_rightsInfo)) {
+        gdprRightsIssues.push(
+          "Clearly explain all GDPR data subject rights in the privacy notice and provide accessible mechanisms to exercise them: right of access (Art. 15), rectification (Art. 16), erasure/'right to be forgotten' (Art. 17), restriction of processing (Art. 18), data portability (Art. 20), objection (Art. 21), and rights related to automated decision-making (Art. 22). Respond to requests within one month."
+        );
+      }
+      if (["no", "partial", undefined].includes(answers.gdpr_dpo) && answers.gdpr_dpo !== "na") {
+        gdprRightsIssues.push(
+          "If DPO is required (public authority, large-scale monitoring, or special categories - Arts. 37-39), publish the DPO's contact details prominently on the website and in all privacy communications. Ensure the DPO is independent and has adequate resources."
+        );
+      }
+      if (gdprRightsIssues.length) {
+        recs.push({
+          title: "🇪🇺 GDPR: Data Subject Rights & DPO (Arts. 15–22, 37–39)",
+          items: gdprRightsIssues
+        });
+      }
+
+      const gdprSecIssues = [];
+      if (["no", "partial", undefined].includes(answers.gdpr_security)) {
+        gdprSecIssues.push(
+          "Implement and document appropriate technical and organizational measures to ensure security of processing (Art. 32): pseudonymization and encryption, ongoing confidentiality/integrity/availability/resilience of systems, ability to restore availability and access in timely manner after incident, regular testing and evaluation of effectiveness. Consider state of the art, implementation costs, and risk level."
+        );
+      }
+      if (["no", "partial", undefined].includes(answers.gdpr_breach)) {
+        gdprSecIssues.push(
+          "Establish a GDPR-compliant breach notification procedure: (1) Notify the relevant supervisory authority within 72 hours of becoming aware of a breach (Art. 33), including nature of breach, categories and approximate numbers affected, likely consequences, and measures taken/proposed; (2) Notify affected data subjects without undue delay if the breach is likely to result in high risk to their rights and freedoms (Art. 34). Maintain internal breach register."
+        );
+      }
+      if (gdprSecIssues.length) {
+        recs.push({
+          title: "🇪🇺 GDPR: Security & Breach Notification (Arts. 32–34)",
+          items: gdprSecIssues
+        });
+      }
+
+      const gdprTransferIssues = [];
+      if (["no", "partial", undefined].includes(answers.gdpr_transfers) && answers.gdpr_transfers !== "na") {
+        gdprTransferIssues.push(
+          "Ensure all international data transfers outside the EEA comply with GDPR Chapter V (Arts. 44-49): use adequacy decisions (Art. 45), Standard Contractual Clauses/SCCs (Art. 46), Binding Corporate Rules/BCRs (Art. 47), or specific derogations (Art. 49). Document transfer mechanisms and conduct Transfer Impact Assessments where required. Update privacy notice to explain transfers and safeguards."
+        );
+      }
+      if (["no", "partial", undefined].includes(answers.gdpr_specialCategories) && answers.gdpr_specialCategories !== "na") {
+        gdprTransferIssues.push(
+          "If processing special category data (Art. 9: health, biometric, genetic, racial/ethnic origin, political opinions, religious/philosophical beliefs, trade union membership, sex life/sexual orientation), ensure you have explicit consent or another Art. 9(2) legal basis. Implement enhanced security measures and document the necessity and proportionality of processing."
+        );
+      }
+      if (["no", "partial", undefined].includes(answers.gdpr_children) && answers.gdpr_children !== "na") {
+        gdprTransferIssues.push(
+          "For information society services offered directly to children, obtain verifiable parental consent for children under 16 (or lower age set by member state, minimum 13) (Art. 8). Implement age verification and parental consent mechanisms. Use clear, plain language suitable for children in privacy notices."
+        );
+      }
+      if (gdprTransferIssues.length) {
+        recs.push({
+          title: "🇪🇺 GDPR: International Transfers & Special Categories (Arts. 8, 9, 44–49)",
+          items: gdprTransferIssues
+        });
+      }
+
+      // GENERAL RECOMMENDATIONS
+      if (!recs.length) {
+        recs.push({
+          title: "✅ Compliance Hardening & Best Practices",
+          items: [
+            "Maintain a comprehensive Record of Processing Activities (ROPA) as required by GDPR Art. 30 and align with DPDP documentation requirements.",
+            "Conduct regular Data Protection Impact Assessments (DPIAs) for high-risk processing, especially for new technologies, large-scale processing, or special categories (GDPR Art. 35).",
+            "Implement Privacy by Design and by Default principles in all new systems and processes (GDPR Art. 25).",
+            "Ensure all data processing agreements with third parties (processors, joint controllers) include appropriate GDPR and DPDP clauses (GDPR Art. 28, DPDP Rule 6).",
+            "Establish regular training programs for staff on data protection obligations under both DPDP and GDPR.",
+            "Schedule periodic compliance audits (at least annually) and update policies as regulations evolve.",
+            "Monitor guidance from the Data Protection Board of India and European Data Protection Board (EDPB) for evolving interpretations and requirements."
+          ]
+        });
+      }
+
+      return recs;
+    }
+
+    function renderRecommendations(recs) {
+      const container = document.getElementById("recsContainer");
+      container.innerHTML = "";
+      recs.forEach(group => {
+        const div = document.createElement("div");
+        div.className = "rec-group";
+        const title = document.createElement("div");
+        title.className = "rec-title";
+        title.textContent = group.title;
+        const ul = document.createElement("ul");
+        ul.className = "rec-list";
+        group.items.forEach(item => {
+          const li = document.createElement("li");
+          li.textContent = item;
+          ul.appendChild(li);
+        });
+        div.appendChild(title);
+        div.appendChild(ul);
+        container.appendChild(div);
+      });
+      container.style.display = "block";
+    }
+
+    function initQuestionPills() {
+      document.querySelectorAll(".question").forEach(q => {
+        const pills = q.querySelectorAll(".pill");
+        pills.forEach(p => {
+          p.addEventListener("click", () => {
+            pills.forEach(pp => (pp.dataset.selected = "false"));
+            p.dataset.selected = "true";
+            q.setAttribute("data-answer", p.getAttribute("data-value"));
+          });
+        });
+      });
+    }
+
+    function gatherAnswers() {
+      const answers = {};
+      document.querySelectorAll(".question").forEach(q => {
+        const key = q.getAttribute("data-key");
+        const ans = q.getAttribute("data-answer");
+        answers[key] = ans || undefined;
+      });
+      return answers;
+    }
+
+    function resetAnswers() {
+      document.querySelectorAll(".question").forEach(q => {
+        q.removeAttribute("data-answer");
+        q.querySelectorAll(".pill").forEach(p => (p.dataset.selected = "false"));
+      });
+      document.getElementById("scoreNumber").textContent = "–";
+      document.getElementById("summaryText").textContent =
+        "Fill in the answers on the left and click Calculate Compliance to see scores and tailored guidance for both DPDP and GDPR.";
+      const levelPill = document.getElementById("levelPill");
+      levelPill.style.display = "none";
+      document.getElementById("sectionScores").style.display = "none";
+      document.getElementById("recsContainer").style.display = "none";
+    }
+
+    function updateScoreRing(pct) {
+      const ring = document.getElementById("scoreRing");
+      const deg = (pct / 100) * 360;
+      const color1 = pct >= 80 ? "#10b981" : pct >= 50 ? "#fbbf24" : "#f97316";
+      const color2 = pct >= 80 ? "#3b82f6" : pct >= 50 ? "#f97316" : "#ef4444";
+      ring.style.background =
+        `radial-gradient(circle, #0a0e27 0, #0a0e27 52%, transparent 55%),
+         conic-gradient(${color1} 0deg, ${color2} ${deg}deg, rgba(31,41,55,0.5) ${deg}deg 360deg)`;
+      ring.style.boxShadow = `0 0 30px ${color1}66`;
+      document.getElementById("scoreNumber").textContent = pct ? String(pct) : "–";
+    }
+
+    function updateSectionBadges(dpdpSectionPct, gdprSectionPct) {
+      const sectionScores = document.getElementById("sectionScores");
+      sectionScores.style.display = "flex";
+
+      function setSec(elemId, container, pct) {
+        const el = document.getElementById(elemId);
+        const lvl = levelFromPct(pct);
+        el.textContent = pct ? `${pct}% · ${sectionLabel(lvl)}` : "–";
+        container.setAttribute("data-level", lvl);
+      }
+
+      setSec(
+        "sectionDpdpNoticeValue",
+        sectionScores.querySelector('[data-section="dpdp_notice"]'),
+        dpdpSectionPct.notice
+      );
+      setSec(
+        "sectionDpdpRightsValue",
+        sectionScores.querySelector('[data-section="dpdp_rights"]'),
+        dpdpSectionPct.rights
+      );
+      setSec(
+        "sectionDpdpSecurityValue",
+        sectionScores.querySelector('[data-section="dpdp_security"]'),
+        dpdpSectionPct.security
+      );
+      setSec(
+        "sectionDpdpXBorderValue",
+        sectionScores.querySelector('[data-section="dpdp_xborder"]'),
+        dpdpSectionPct.xborder
+      );
+
+      setSec(
+        "sectionGdprLawfulValue",
+        sectionScores.querySelector('[data-section="gdpr_lawful"]'),
+        gdprSectionPct.lawful
+      );
+      setSec(
+        "sectionGdprRightsValue",
+        sectionScores.querySelector('[data-section="gdpr_rights"]'),
+        gdprSectionPct.rights
+      );
+      setSec(
+        "sectionGdprSecurityValue",
+        sectionScores.querySelector('[data-section="gdpr_security"]'),
+        gdprSectionPct.security
+      );
+      setSec(
+        "sectionGdprTransfersValue",
+        sectionScores.querySelector('[data-section="gdpr_transfers"]'),
+        gdprSectionPct.transfers
+      );
+    }
+
+    function initTabs() {
+      const tabs = document.querySelectorAll(".tab");
+      const contents = document.querySelectorAll(".tab-content");
+
+      tabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+          const target = tab.getAttribute("data-tab");
+          tabs.forEach(t => t.classList.remove("active"));
+          contents.forEach(c => c.classList.remove("active"));
+          tab.classList.add("active");
+          document
+            .querySelector(`[data-tab-content="${target}"]`)
+            .classList.add("active");
+        });
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initQuestionPills();
+      initTabs();
+
+      document.getElementById("calculateBtn").addEventListener("click", () => {
+        const answers = gatherAnswers();
+        const scores = computeScores(answers);
+        const level = levelFromPct(scores.overallPct);
+
+        updateScoreRing(scores.overallPct);
+        updateSectionBadges(scores.dpdpSectionPct, scores.gdprSectionPct);
+
+        const levelPill = document.getElementById("levelPill");
+        levelPill.className = levelClass(level);
+        levelPill.textContent = levelLabel(level);
+        levelPill.style.display = "inline-flex";
+
+        const url = document.getElementById("siteUrl").value.trim();
+        document.getElementById("summaryText").textContent = levelSummary(
+          level,
+          scores.dpdpPct,
+          scores.gdprPct,
+          url
+        );
+
+        const recs = generateRecommendations(answers, scores);
+        renderRecommendations(recs);
+      });
+
+      document.getElementById("resetBtn").addEventListener("click", resetAnswers);
+    });
+  </script>
+</body>
+</html>
